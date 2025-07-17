@@ -1,0 +1,7 @@
+.env.example
+.env.local
+/.next/cache/
+/.next/
+/.next/static/
+node_modules
+deployments
