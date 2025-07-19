@@ -5,113 +5,14 @@ import { useParams, useRouter } from 'next/navigation'
 import TutorialRenderer from '@/components/TutorialRenderer'
 import { Tutorial, CodeSubmission, TutorialProgress } from '@/types'
 import { isUserSignedIn, getUserAddress } from '@/lib/wallet'
-
-// Mock tutorial content
-const getTutorialContent = (id: string): string => {
-  if (id === 'hello-clarity') {
-    return `# Hello Clarity
-
-Welcome to your first Clarity smart contract tutorial! In this lesson, you'll learn the basics of the Clarity language and deploy your first contract to the Stacks testnet.
-
-## What is Clarity?
-
-Clarity is a decidable smart contract language that optimizes for predictability and security. Unlike other smart contract languages, Clarity is interpreted (not compiled) and the complete program is published on-chain.
-
-Key features of Clarity:
-- **Decidable**: You can know with certainty what a program will do
-- **Interpreted**: No compilation step, source code is published on-chain  
-- **Non-Turing complete**: Prevents infinite loops and makes programs predictable
-- **Secure by design**: Built-in protections against common vulnerabilities
-
-## Your First Function
-
-Let's start with the classic "Hello World" example. In Clarity, we'll create a simple function that returns a greeting.
-
-\`\`\`clarity
-(define-public (hello-world)
-  (ok "Hello, Bitcoin!"))
-\`\`\`
-
-This function:
-- Uses \`define-public\` to create a public function anyone can call
-- Returns \`(ok "Hello, Bitcoin!")\` - the \`ok\` indicates success
-- Takes no parameters (empty parentheses)
-
-[Code Editor]
-
-## Understanding the Syntax
-
-Clarity uses a LISP-like syntax with prefix notation:
-- Functions are called with \`(function-name arg1 arg2)\`
-- Everything is wrapped in parentheses
-- The function name comes first, followed by arguments
-
-## Response Types
-
-Clarity functions return Response types that can be either:
-- \`(ok value)\` - indicates success with a value
-- \`(err error)\` - indicates an error occurred
-
-This makes error handling explicit and predictable.
-
-## Try It Yourself
-
-In the code editor, try modifying the hello-world function:
-
-1. Change the message to something personal
-2. Try creating a new function called \`get-number\` that returns \`(ok u42)\`
-3. Create a function that takes a name parameter
-
-[Code Editor]
-
-## Data Types
-
-Clarity has several built-in data types:
-- \`uint\` - unsigned integers (u1, u42, u1000)
-- \`int\` - signed integers (1, -42, 1000)  
-- \`bool\` - booleans (true, false)
-- \`string-ascii\` - ASCII strings
-- \`string-utf8\` - UTF-8 strings
-- \`principal\` - Stacks addresses
-
-## Working with Variables
-
-Let's create a simple counter contract:
-
-\`\`\`clarity
-(define-data-var counter uint u0)
-
-(define-public (increment)
-  (begin
-    (var-set counter (+ (var-get counter) u1))
-    (ok (var-get counter))))
-
-(define-read-only (get-counter)
-  (var-get counter))
-\`\`\`
-
-[Code Editor]
-
-## Congratulations!
-
-You've completed your first Clarity tutorial! You've learned:
-- Basic Clarity syntax and structure
-- How to create public and read-only functions
-- Working with data types and variables
-- Response types for error handling
-
-Ready to earn your certificate? Make sure your wallet is connected and click "Complete Tutorial" below.`
-  }
-  
-  return 'Tutorial content not found.'
-}
+import { getTutorialContentClient } from '@/lib/tutorials'
 
 const mockTutorials: { [key: string]: Tutorial } = {
   'hello-clarity': {
     id: 'hello-clarity',
     title: 'Hello Clarity',
     description: 'Learn the basics of Clarity smart contract language and deploy your first contract to the Stacks blockchain.',
-    content: getTutorialContent('hello-clarity'),
+    content: '',
     difficulty: 'Beginner',
     estimatedTime: '30 minutes',
     tags: ['clarity', 'basics', 'smart-contracts'],
@@ -120,6 +21,34 @@ const mockTutorials: { [key: string]: Tutorial } = {
     updatedAt: new Date('2024-01-01'),
     isPublished: true,
     prerequisites: []
+  },
+  'your-first-dapp': {
+    id: 'your-first-dapp',
+    title: 'Your First DApp',
+    description: 'Build a complete decentralized application with frontend integration using React and Stacks.js.',
+    content: '',
+    difficulty: 'Intermediate',
+    estimatedTime: '2 hours',
+    tags: ['dapp', 'frontend', 'react', 'stacks.js'],
+    author: 'Bitcoin Developer Academy',
+    createdAt: new Date('2024-01-15'),
+    updatedAt: new Date('2024-01-15'),
+    isPublished: true,
+    prerequisites: ['hello-clarity']
+  },
+  'nfts-on-stacks': {
+    id: 'nfts-on-stacks',
+    title: 'NFTs on Stacks',
+    description: 'Master NFT standards and build a complete marketplace with minting, trading, and royalties.',
+    content: '',
+    difficulty: 'Advanced',
+    estimatedTime: '3 hours',
+    tags: ['nft', 'marketplace', 'sip-009', 'advanced'],
+    author: 'Bitcoin Developer Academy',
+    createdAt: new Date('2024-02-01'),
+    updatedAt: new Date('2024-02-01'),
+    isPublished: true,
+    prerequisites: ['hello-clarity', 'your-first-dapp']
   }
 }
 
@@ -137,8 +66,14 @@ export default function TutorialPage() {
     // Load tutorial data
     const tutorialData = mockTutorials[tutorialId]
     if (tutorialData) {
-      setTutorial(tutorialData)
-      
+      // Load content dynamically
+      const content = getTutorialContentClient(tutorialId)
+      const tutorialWithContent = {
+        ...tutorialData,
+        content: content
+      }
+      setTutorial(tutorialWithContent)
+
       // Load user progress if signed in
       if (isUserSignedIn()) {
         const userAddress = getUserAddress()
@@ -156,7 +91,7 @@ export default function TutorialPage() {
     } else {
       setError('Tutorial not found')
     }
-    
+
     setIsLoading(false)
   }, [tutorialId])
 
@@ -212,7 +147,7 @@ export default function TutorialPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-custom-purple flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-stacks mx-auto mb-4"></div>
           <p className="text-gray-600">Loading tutorial...</p>
@@ -223,7 +158,7 @@ export default function TutorialPage() {
 
   if (error || !tutorial) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-custom-purple flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-900 mb-4">Tutorial Not Found</h1>
           <p className="text-gray-600 mb-6">{error || 'The requested tutorial could not be found.'}</p>
@@ -239,9 +174,9 @@ export default function TutorialPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-custom-purple">
       {/* Header */}
-      <div className="bg-white shadow-sm border-b">
+      <div className="bg-custom-purple shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center space-x-4">
@@ -282,6 +217,7 @@ export default function TutorialPage() {
           tutorial={tutorial}
           onComplete={handleComplete}
           onProgress={handleProgress}
+          showCertificateMinter={true}
         />
       </div>
     </div>

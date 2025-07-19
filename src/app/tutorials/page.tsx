@@ -31,7 +31,7 @@ const mockTutorials: Tutorial[] = [
     author: 'Bitcoin Developer Academy',
     createdAt: new Date('2024-01-15'),
     updatedAt: new Date('2024-01-15'),
-    isPublished: false,
+    isPublished: true,
     prerequisites: ['hello-clarity']
   },
   {
@@ -45,7 +45,7 @@ const mockTutorials: Tutorial[] = [
     author: 'Bitcoin Developer Academy',
     createdAt: new Date('2024-02-01'),
     updatedAt: new Date('2024-02-01'),
-    isPublished: false,
+    isPublished: true,
     prerequisites: ['hello-clarity', 'your-first-dapp']
   }
 ]
@@ -78,9 +78,9 @@ export default function TutorialsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-custom-purple">
       {/* Header */}
-      <div className="bg-white shadow-sm">
+      <div className="bg-custom-purple shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center">
             <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4 px-4">
@@ -117,7 +117,7 @@ export default function TutorialsPage() {
                 className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                   selectedDifficulty === difficulty
                     ? 'bg-primary text-white'
-                    : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                    : 'bg-custom-purple text-gray-700 border border-gray-300 hover:bg-custom-purple/80'
                 }`}
               >
                 {difficulty}
@@ -129,7 +129,7 @@ export default function TutorialsPage() {
         {/* Tutorial Grid */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredTutorials.map((tutorial) => (
-            <div key={tutorial.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+            <div key={tutorial.id} className="bg-custom-purple rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow border border-gray-300">
               {/* Card Header */}
               <div className="p-6">
                 <div className="flex items-center justify-between mb-3">

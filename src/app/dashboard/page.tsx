@@ -6,31 +6,14 @@ import Link from 'next/link'
 import CertificateCard from '@/components/CertificateCard'
 import ProgressBar from '@/components/ProgressBar'
 import { isUserSignedIn, getUserAddress, getUserData } from '@/lib/wallet'
+import {
+  getCertificatesByOwner,
+  getUserProgress,
+  getMockCertificates,
+  getMockProgress,
+  formatAddress as blockchainFormatAddress
+} from '@/lib/blockchain'
 import { Certificate, UserProgress, Course } from '@/types'
-
-// Mock data
-const mockCertificates: Certificate[] = [
-  {
-    tokenId: 1,
-    courseId: 1,
-    courseName: 'Hello Clarity',
-    recipient: 'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM',
-    completionDate: new Date('2024-01-15'),
-    skillLevel: 1,
-    ipfsMetadata: 'QmHash123456789',
-    transactionId: '0x1234567890abcdef1234567890abcdef12345678'
-  }
-]
-
-const mockProgress: UserProgress = {
-  completedModules: [1, 2, 3],
-  currentCourse: 1,
-  totalPoints: 150,
-  currentStreak: 5,
-  lastActivity: new Date(),
-  skillLevel: 1,
-  totalTimeSpent: 180
-}
 
 const mockCourses: Course[] = [
   {
@@ -52,7 +35,18 @@ const mockCourses: Course[] = [
     modules: [],
     estimatedTime: '2 hours',
     tags: ['dapp', 'frontend'],
-    isPublished: false,
+    isPublished: true,
+    author: 'Bitcoin Developer Academy'
+  },
+  {
+    id: 3,
+    title: 'NFTs on Stacks',
+    description: 'Master NFT standards and build a complete marketplace',
+    difficulty: 'Advanced',
+    modules: [],
+    estimatedTime: '3 hours',
+    tags: ['nft', 'marketplace', 'sip-009'],
+    isPublished: true,
     author: 'Bitcoin Developer Academy'
   }
 ]
@@ -64,25 +58,47 @@ export default function DashboardPage() {
   const [certificates, setCertificates] = useState<Certificate[]>([])
   const [progress, setProgress] = useState<UserProgress | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    const checkConnection = () => {
+    const loadUserData = async () => {
       const connected = isUserSignedIn()
       setIsConnected(connected)
-      
+
       if (connected) {
         const address = getUserAddress()
         setUserAddress(address || null)
-        
-        // Load user data
-        setCertificates(mockCertificates)
-        setProgress(mockProgress)
+
+        if (address) {
+          try {
+            // Load real blockchain data
+            const [userCertificates, userProgress] = await Promise.all([
+              getCertificatesByOwner(address),
+              getUserProgress(address)
+            ])
+
+            // If no blockchain data available, use mock data for demo
+            if (userCertificates.length === 0 && userProgress?.totalPoints === 0) {
+              setCertificates(getMockCertificates())
+              setProgress(getMockProgress())
+            } else {
+              setCertificates(userCertificates)
+              setProgress(userProgress)
+            }
+          } catch (err) {
+            console.error('Error loading user data:', err)
+            setError('Failed to load user data')
+            // Fallback to mock data
+            setCertificates(getMockCertificates())
+            setProgress(getMockProgress())
+          }
+        }
       }
-      
+
       setIsLoading(false)
     }
 
-    checkConnection()
+    loadUserData()
   }, [])
 
   const getSkillLevelText = (level: number) => {
@@ -96,12 +112,12 @@ export default function DashboardPage() {
   }
 
   const formatAddress = (address: string) => {
-    return `${address.slice(0, 8)}...${address.slice(-8)}`
+    return blockchainFormatAddress(address)
   }
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-custom-purple flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-stacks mx-auto mb-4"></div>
           <p className="text-gray-600">Loading dashboard...</p>
@@ -112,7 +128,7 @@ export default function DashboardPage() {
 
   if (!isConnected) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-custom-purple flex items-center justify-center">
         <div className="text-center max-w-md mx-auto">
           <div className="mb-8">
             <svg className="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -123,7 +139,7 @@ export default function DashboardPage() {
               Connect your Stacks wallet to view your learning progress, certificates, and achievements.
             </p>
           </div>
-          
+
           <div className="space-y-4">
             <button
               onClick={() => window.location.href = '/'}
@@ -141,9 +157,9 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-custom-purple">
       {/* Header */}
-      <div className="bg-white shadow-sm">
+      <div className="bg-custom-purple shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex items-center justify-between">
             <div>
@@ -167,7 +183,7 @@ export default function DashboardPage() {
         {/* Stats Overview */}
         {progress && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 mb-8">
-            <div className="bg-white rounded-lg shadow p-6">
+            <div className="bg-custom-purple rounded-lg shadow p-6 border border-gray-300">
               <div className="flex items-center">
                 <div className="p-2 bg-primary rounded-lg">
                   <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -181,7 +197,7 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            <div className="bg-white rounded-lg shadow p-6">
+            <div className="bg-custom-purple rounded-lg shadow p-6 border border-gray-300">
               <div className="flex items-center">
                 <div className="p-2 bg-secondary rounded-lg">
                   <svg className="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -195,7 +211,7 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            <div className="bg-white rounded-lg shadow p-6">
+            <div className="bg-custom-purple rounded-lg shadow p-6 border border-gray-300">
               <div className="flex items-center">
                 <div className="p-2 bg-bitcoin rounded-lg">
                   <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -209,7 +225,7 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            <div className="bg-white rounded-lg shadow p-6">
+            <div className="bg-custom-purple rounded-lg shadow p-6 border border-gray-300">
               <div className="flex items-center">
                 <div className="p-2 bg-primary rounded-lg">
                   <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -230,7 +246,7 @@ export default function DashboardPage() {
           <div className="lg:col-span-2 space-y-6">
             {/* Current Progress */}
             {progress && (
-              <div className="bg-white rounded-lg shadow p-6">
+              <div className="bg-custom-purple rounded-lg shadow p-6 border border-gray-300">
                 <h2 className="text-xl font-semibold text-gray-900 mb-4">Learning Progress</h2>
                 
                 {progress.currentCourse && (
@@ -268,7 +284,7 @@ export default function DashboardPage() {
             )}
 
             {/* Available Courses */}
-            <div className="bg-white rounded-lg shadow p-6">
+            <div className="bg-custom-purple rounded-lg shadow p-6 border border-gray-300">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">Continue Learning</h2>
               
               <div className="space-y-4">
@@ -313,7 +329,7 @@ export default function DashboardPage() {
 
           {/* Right Column - Certificates */}
           <div>
-            <div className="bg-white rounded-lg shadow p-6">
+            <div className="bg-custom-purple rounded-lg shadow p-6 border border-gray-300">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">Your Certificates</h2>
               
               {certificates.length > 0 ? (

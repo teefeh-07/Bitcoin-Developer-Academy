@@ -4,18 +4,21 @@ import { useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import CodeEditor from './CodeEditor'
+import CertificateMinter from './CertificateMinter'
 import { Tutorial, CodeSubmission } from '@/types'
 
 interface TutorialRendererProps {
   tutorial: Tutorial
   onComplete: (submission: CodeSubmission) => void
   onProgress: (step: number) => void
+  showCertificateMinter?: boolean
 }
 
-export default function TutorialRenderer({ 
-  tutorial, 
-  onComplete, 
-  onProgress 
+export default function TutorialRenderer({
+  tutorial,
+  onComplete,
+  onProgress,
+  showCertificateMinter = true
 }: TutorialRendererProps) {
   const [currentStep, setCurrentStep] = useState(0)
   const [userCode, setUserCode] = useState('')
@@ -235,6 +238,22 @@ export default function TutorialRenderer({
                 <p className="text-sm">{feedback}</p>
               </div>
             )}
+          </div>
+        )}
+
+        {/* Certificate Minter - Show at the end of tutorial */}
+        {showCertificateMinter && currentStep === steps.length - 1 && (
+          <div className="mt-8">
+            <CertificateMinter
+              courseId={tutorial.id}
+              onSuccess={(txId, tokenId) => {
+                console.log('Certificate minted:', { txId, tokenId })
+                // Could trigger confetti or other celebration effects
+              }}
+              onError={(error) => {
+                console.error('Certificate minting error:', error)
+              }}
+            />
           </div>
         )}
       </div>

@@ -107,7 +107,7 @@ export default function CertificateCard({
 
         {/* Back of card */}
         <div className="absolute inset-0 w-full h-full backface-hidden rotate-y-180">
-          <div className="bg-white border-2 border-gray-200 rounded-lg h-full p-6 flex flex-col justify-between">
+          <div className="bg-custom-purple border-2 border-gray-300 rounded-lg h-full p-6 flex flex-col justify-between">
             {/* Certificate Details */}
             <div>
               <h3 className="text-lg font-bold text-gray-900 mb-4">Certificate Details</h3>
